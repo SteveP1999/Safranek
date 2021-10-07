@@ -10,27 +10,35 @@ public class PlayerController : MonoBehaviour
     [SerializeField]private Transform groundCheck;
     [SerializeField]private LayerMask groundLayer;
     private float turnSmoothing = 0.1f;
-    private float gravity=-19.62f;
+    private float jumpHeight=2f;
+    private float gravity=-30f;
     private float turnSmoothVelocity;
     private Vector3 velocity;
+    private Vector3 move;
+    private bool isGrounded=false;
     private void Update()
     {
+        isGrounded=Physics.CheckSphere(groundCheck.position,0.1f,groundLayer);
+        if(isGrounded&&velocity.y<0){
+            velocity.y=-2f;
+        }
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");
-        velocity=new Vector3(x,0f,z).normalized;
-        if(velocity.magnitude>=0.1f){
-            float targetAngle=Mathf.Atan2(velocity.x,velocity.z)*Mathf.Rad2Deg;
-            float angle =Mathf.SmoothDampAngle(transform.eulerAngles.y,targetAngle,ref turnSmoothVelocity,turnSmoothing);
+        move=new Vector3(x,0f,z).normalized;
+        if(move.magnitude>=0.1f){
+            float targetAngle=Mathf.Atan2(move.x,move.z)*Mathf.Rad2Deg;
+            float angle=Mathf.SmoothDampAngle(transform.eulerAngles.y,targetAngle,ref turnSmoothVelocity,turnSmoothing);
             transform.rotation=Quaternion.Euler(0f,angle,0f);
-            characterController.Move(velocity*movementSpeed*Time.deltaTime);
+            characterController.Move(move*movementSpeed*Time.deltaTime);
             animator.SetBool("isWalking",true);
         }else{
             animator.SetBool("isWalking",false);
         }
-        if (!Physics.CheckSphere(groundCheck.position,0.3f,groundLayer))
-            velocity.y+=gravity*Time.deltaTime;
-        else
-            velocity.y=-0.1f;
+        if (isGrounded&&Input.GetButtonDown("Jump"))
+        {
+            velocity.y=Mathf.Sqrt(jumpHeight*-2f*gravity);
+        }
+        velocity.y+=gravity*Time.deltaTime;
         characterController.Move(velocity*Time.deltaTime);
     }
 }
